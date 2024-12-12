@@ -2,7 +2,7 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from telethon import TelegramClient
-from flask import Flask
+from flask import Flask, jsonify, request
 import threading
 import time
 from bot.commands import set_commands
@@ -72,10 +72,12 @@ def schedule_tasks():
     asyncio.set_event_loop(loop)  # Установлюємо новий цикл подій
     try:
         while True:
-            asyncio.run(start_bot_with_timer(82_800))
-            # Викликаємо асинхронну функцію в циклі подій
-            loop.run_until_complete(check_and_notify_groups_for_birthday(bot))
-            time.sleep(3_600)  # Перевіряти час кожну годину
+            for i in range(2_760):
+                asyncio.run(start_bot_with_timer(30))
+                # Викликаємо асинхронну функцію в циклі подій
+                loop.run_until_complete(check_and_notify_groups_for_birthday(bot))
+            for j in range(360):
+                time.sleep(10)  # Перевіряти час кожну годину
     finally:
         loop.close()  # Закриваємо цикл подій після завершення
 
@@ -90,6 +92,17 @@ def index():
     """Home page to show the status of the scheduler."""
     status = "Бот запущений." if bot_running else "Бот вимкнений."
     return f"Сервер Flask працює. Статус бота: {status}"
+
+
+@app.route('/echo', methods=['GET'])
+def echo():
+    # Get all query parameters from the request
+    query_params = request.args
+
+    # Return the parameters back as a JSON response
+    return jsonify({
+        "echoed_data": query_params
+    })
 
 if __name__ == '__main__':
     run_scheduler()  # Start the scheduler
