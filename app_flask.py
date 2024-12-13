@@ -55,7 +55,7 @@ async def start_bot():
     await set_commands(bot)
     register_handlers(dp, telethon_client)
     logging.info("Бот запущений.")
-    await dp.start_polling(bot, skip_updates=True)
+    await dp.start_polling(bot, skip_updates=True, close_loop=False)
 
 
 def bot_thread(loop):
