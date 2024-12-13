@@ -7,7 +7,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from bot.commands import set_commands
 from bot.handlers import register_handlers, check_and_notify_groups_for_birthday
 from config import TELEGRAM_TOKEN, API_ID, API_HASH
-from threading import Thread
 from aiogram.fsm.storage.memory import MemoryStorage
 from pytz import timezone
 
@@ -54,30 +53,31 @@ async def start_bot():
     await set_commands(bot)
     register_handlers(dp, telethon_client)
     logging.info("Бот запущений.")
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot, skip_updates=True)
+    finally:
+        await bot.session.close()  # Закриваємо сесію бота
+        await dp.shutdown()       # Закриваємо Dispatcher
 
 
 def start_bot_task():
-    """Function to run bot in event loop."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(start_bot())
+    """Function to run bot in the main event loop."""
+    asyncio.run(start_bot())
 
 
 def run_scheduler():
     """Run the schedule in a separate thread."""
-    scheduler.add_job(start_bot_task, 'interval', minutes=1440)  # Запускати бота кожного дня
     scheduler.add_job(
         lambda: asyncio.run(check_and_notify_groups_for_birthday(bot)),
         'cron',
         hour=8,
-        minute=5,
+        minute=1,
         timezone=kyiv_tz
     )
     scheduler.start()
-    # Start the bot in a separate thread
-    bot_thread = Thread(target=start_bot_task)
-    bot_thread.start()
+
+    # Запускаємо бота прямо тут
+    start_bot_task()
 
 
 if __name__ == '__main__':
