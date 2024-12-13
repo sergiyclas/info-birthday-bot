@@ -9,6 +9,7 @@ from bot.handlers import register_handlers, check_and_notify_groups_for_birthday
 from config import TELEGRAM_TOKEN, API_ID, API_HASH
 from aiogram.fsm.storage.memory import MemoryStorage
 from pytz import timezone
+from threading import Thread
 
 kyiv_tz = timezone("Europe/Kyiv")
 
@@ -71,15 +72,16 @@ def run_scheduler():
         lambda: asyncio.run(check_and_notify_groups_for_birthday(bot)),
         'cron',
         hour=8,
-        minute=1,
+        minute=5,
         timezone=kyiv_tz
     )
     scheduler.start()
 
-    # Запускаємо бота прямо тут
-    start_bot_task()
-
 
 if __name__ == '__main__':
-    run_scheduler()  # Start the scheduler
-    app.run(debug=False)  # Run Flask app
+    # Запускаємо бота у окремому потоці
+    bot_thread = Thread(target=start_bot_task)
+    bot_thread.start()
+
+    # Запускаємо Flask
+    app.run(debug=False)
