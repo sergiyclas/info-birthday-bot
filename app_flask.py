@@ -31,6 +31,7 @@ logging.basicConfig(level=logging.INFO)
 # Scheduler for periodic tasks
 scheduler = BackgroundScheduler()
 
+
 @app.route('/')
 def index():
     """Home page to show the status of the bot."""
@@ -54,16 +55,13 @@ async def start_bot():
     await set_commands(bot)
     register_handlers(dp, telethon_client)
     logging.info("Бот запущений.")
-    try:
-        await dp.start_polling(bot, skip_updates=True)
-    finally:
-        await bot.session.close()  # Закриваємо сесію бота
-        await dp.shutdown()       # Закриваємо Dispatcher
+    await dp.start_polling(bot, skip_updates=True)
 
 
-def bot_thread():
-    """Function to run bot in a separate thread."""
-    asyncio.run(start_bot())
+def bot_thread(loop):
+    """Function to run bot in the provided asyncio event loop."""
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_bot())
 
 
 def start_scheduler():
@@ -79,8 +77,11 @@ def start_scheduler():
 
 
 if __name__ == '__main__':
-    # Start the bot in a separate thread
-    bot_thread_instance = threading.Thread(target=bot_thread, daemon=True)
+    # Create a new asyncio event loop for the bot
+    bot_loop = asyncio.new_event_loop()
+
+    # Start the bot in a separate thread with the new event loop
+    bot_thread_instance = threading.Thread(target=bot_thread, args=(bot_loop,), daemon=True)
     bot_thread_instance.start()
 
     # Start the scheduler
