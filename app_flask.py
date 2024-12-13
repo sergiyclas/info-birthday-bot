@@ -1,3 +1,4 @@
+import threading
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
@@ -9,7 +10,6 @@ from bot.handlers import register_handlers, check_and_notify_groups_for_birthday
 from config import TELEGRAM_TOKEN, API_ID, API_HASH
 from aiogram.fsm.storage.memory import MemoryStorage
 from pytz import timezone
-from threading import Thread
 
 kyiv_tz = timezone("Europe/Kyiv")
 
@@ -61,27 +61,30 @@ async def start_bot():
         await dp.shutdown()       # Закриваємо Dispatcher
 
 
-def start_bot_task():
-    """Function to run bot in the main event loop."""
+def bot_thread():
+    """Function to run bot in a separate thread."""
     asyncio.run(start_bot())
 
 
-def run_scheduler():
-    """Run the schedule in a separate thread."""
+def start_scheduler():
+    """Start the scheduler."""
     scheduler.add_job(
         lambda: asyncio.run(check_and_notify_groups_for_birthday(bot)),
         'cron',
         hour=8,
-        minute=5,
+        minute=1,
         timezone=kyiv_tz
     )
     scheduler.start()
 
 
 if __name__ == '__main__':
-    # Запускаємо бота у окремому потоці
-    bot_thread = Thread(target=start_bot_task)
-    bot_thread.start()
+    # Start the bot in a separate thread
+    bot_thread_instance = threading.Thread(target=bot_thread, daemon=True)
+    bot_thread_instance.start()
 
-    # Запускаємо Flask
-    app.run(debug=False)
+    # Start the scheduler
+    start_scheduler()
+
+    # Run the Flask app
+    app.run(debug=False, host='0.0.0.0', port=5000)
