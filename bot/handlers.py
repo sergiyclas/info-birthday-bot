@@ -4,6 +4,9 @@ from aiogram import types, Dispatcher, Bot
 from aiogram.filters import Command
 from functools import partial
 import asyncio
+
+from telethon import TelegramClient
+
 from bot.utils import check_today_birthdays, get_upcoming_birthdays, get_users_dict, fetch_messages
 from config import GROUP_ID, GOOGLE_SHEET_URL
 user_message_count = {}
@@ -58,25 +61,6 @@ async def top_activity_day_command(message: types.Message, telethon_client):
         await message.answer(result_message, parse_mode="HTML")
 
 
-# async def send_birthdays(dispatcher: Dispatcher):
-#     message = await check_today_birthdays(GOOGLE_SHEET_URL)
-#     if not message:
-#         return
-#     chat_id = GROUP_NAME
-#     await dispatcher.bot.send_message(chat_id, message)
-#
-# async def schedule_daily_birthdays(dispatcher: Dispatcher):
-#     while True:
-#         now = datetime.now()
-#         target_time = now.replace(hour=22, minute=0, second=0, microsecond=0)
-#
-#         if now > target_time:
-#             target_time += timedelta(days=1)
-#
-#         wait_time = (target_time - now).total_seconds()
-#         await asyncio.sleep(wait_time)
-#         await send_birthdays(dispatcher)
-
 async def cmd_check_today_birthdays(message: types.Message):
     result_message = await check_today_birthdays(GOOGLE_SHEET_URL, message)
     await message.reply(result_message)
@@ -100,15 +84,13 @@ async def check_and_notify_groups_for_birthday(bot):
                 print(f"Не вдалося надіслати повідомлення до групи {GROUP_ID}: {e}")
     # await bot.send_message(GROUP_ID, 'Everything works')
 
-def register_handlers(dp: Dispatcher, telethon_client):
+def register_handlers(dp: Dispatcher, telethon_client: TelegramClient):
     dp.message.register(start_command, Command(commands=['start']))
     dp.message.register(partial(top_activity_all_command, telethon_client=telethon_client),
                         Command(commands=['top_activity_all']))
     dp.message.register(partial(top_activity_month_command, telethon_client=telethon_client),
                         Command(commands=['top_activity_month']))
     dp.message.register(cmd_check_today_birthdays, Command(commands=['today_birthdays']))
-    dp.message.register(cmd_upcoming_birthdays, Command(commands=['upcoming_birthdays'])),
+    dp.message.register(cmd_upcoming_birthdays, Command(commands=['upcoming_birthdays']))
     dp.message.register(partial(top_activity_day_command, telethon_client=telethon_client),
                         Command(commands=['top_activity_day']))
-    # Schedule the daily birthday checks using asyncio.create_task
-    # asyncio.create_task(schedule_daily_birthdays(dp))

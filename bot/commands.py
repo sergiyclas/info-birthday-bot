@@ -9,6 +9,5 @@ async def set_commands(bot: Bot):
         BotCommand(command="/top_activity_day", description="Показати топ активних користувачів за останній день"),
         BotCommand(command="/today_birthdays", description="Перевірити чи хтось сьогодні святкує день народження"),
         BotCommand(command="/upcoming_birthdays", description="Показати 5 найближчих днів народжень"),
-
     ]
     await bot.set_my_commands(commands)
