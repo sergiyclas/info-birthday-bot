@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from urllib3 import proxy_from_url
 
@@ -23,6 +23,7 @@ def get_sorted_birthdays(df):
             birthday_dict[df['Unnamed: 5'][index]] = df['Unnamed: 4'][index]
 
     today = datetime.now()
+    yesterday = today - timedelta(days=1)
 
     # Створюємо новий список, який включатиме поточний рік для порівняння
     sorted_birthdays = []
@@ -33,7 +34,9 @@ def get_sorted_birthdays(df):
         adjusted_birthday = birthday_date.replace(year=today.year)
 
         # Якщо день народження вже минув цього року, переносимо його на наступний рік
-        if adjusted_birthday < today:
+        print(adjusted_birthday, yesterday, today)
+        print('what')
+        if adjusted_birthday < yesterday:
             adjusted_birthday = adjusted_birthday.replace(year=today.year + 1)
 
         sorted_birthdays.append((adjusted_birthday, username))

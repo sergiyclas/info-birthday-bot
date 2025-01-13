@@ -1,6 +1,8 @@
 import requests
 import pandas as pd
 from collections import defaultdict
+
+from dateutil.utils import today
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel
 from datetime import datetime, timedelta
@@ -102,6 +104,7 @@ async def get_sorted_birthdays(df):
             birthday_dict[df['Unnamed: 5'][index]] = df['Unnamed: 4'][index]
 
     today = datetime.now()
+    yesterday = today - timedelta(days=1)
 
     # Створюємо новий список, який включатиме поточний рік для порівняння
     sorted_birthdays = []
@@ -112,7 +115,8 @@ async def get_sorted_birthdays(df):
         adjusted_birthday = birthday_date.replace(year=today.year)
 
         # Якщо день народження вже минув цього року, переносимо його на наступний рік
-        if adjusted_birthday < today:
+        # print(adjusted_birthday, yesterday, today)
+        if adjusted_birthday < yesterday:
             adjusted_birthday = adjusted_birthday.replace(year=today.year + 1)
 
         sorted_birthdays.append((adjusted_birthday, username))
@@ -126,14 +130,17 @@ async def check_today_birthdays(csv_url, mess=None):
     df = await fetch_birthdays_from_csv(csv_url)
     sorted_birthdays = await get_sorted_birthdays(df)
 
+    # print(sorted_birthdays)
+    # print(df)
     today = datetime.now().date()  # Отримуємо сьогоднішню дату у форматі datetime.date()
     # today = '2024-11-02'
+    # print(today)
 
     messages = []
-    for date, nick in sorted_birthdays:
+    for date_member, nick in sorted_birthdays:
         # Порівнюємо тільки дати без часу
         # print(date.date(), today)
-        if date.date() == today:
+        if date_member.date() == today:
             messages.append(f"Вітаю з днем народження! {nick}")
 
     if mess and not messages:
